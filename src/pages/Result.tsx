@@ -3,7 +3,7 @@ import { useNavigate, Navigate } from "react-router-dom";
 import { Card } from "../components/Card";
 import { PrimaryBtn, SecondaryBtn, GhostBtn } from "../components/Btn";
 import { TypeBadge } from "../components/TypeBadge";
-import { AnimalEasterEgg } from "../components/AnimalEasterEgg";
+import { PixelAnimal } from "../components/PixelAnimal";
 import { PixelIcon } from "../components/PixelIcon";
 import { RadarChart } from "../components/charts/RadarChart";
 import { bgStyle, C } from "../data/design";
@@ -122,7 +122,7 @@ export function Result() {
               border: `1px solid ${T.color}44`,
             }}
           >
-            <AnimalEasterEgg type={top} size={120} />
+            <PixelAnimal type={top} size={120} hint />
           </div>
           <div className="text-xs font-medium mb-1" style={{ color: T.color }}>
             {animal.name}
