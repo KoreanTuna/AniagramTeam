@@ -28,7 +28,7 @@ export function Footer() {
       <span>제작자 '고랭지참치'</span>
       <span style={{ opacity: 0.5 }}>·</span>
       <a
-        href="https://github.com/KoreanTuna"
+        href="https://github.com/KoreanTuna/AniagramTeam"
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1 transition-colors pointer-events-auto"
@@ -37,7 +37,7 @@ export function Footer() {
         onMouseLeave={(e) => (e.currentTarget.style.color = C.textLL)}
       >
         <GithubIcon size={12} />
-        <span>KoreanTuna</span>
+        <span>KoreanTuna/AniagramTeam</span>
       </a>
     </footer>
   );
