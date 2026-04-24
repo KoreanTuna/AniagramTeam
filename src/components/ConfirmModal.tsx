@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { C } from "../data/design";
 
 export function ConfirmModal({
@@ -20,13 +20,22 @@ export function ConfirmModal({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     if (!open) return;
+    // 모달 오픈 시 기존 포커스 저장 → 취소 버튼으로 이동, 닫힐 때 원래 요소로 복원.
+    previouslyFocused.current = document.activeElement as HTMLElement | null;
+    cancelRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onCancel();
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      previouslyFocused.current?.focus?.();
+    };
   }, [open, onCancel]);
 
   if (!open) return null;
@@ -57,6 +66,7 @@ export function ConfirmModal({
         </p>
         <div className="flex gap-2">
           <button
+            ref={cancelRef}
             type="button"
             onClick={onCancel}
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98]"

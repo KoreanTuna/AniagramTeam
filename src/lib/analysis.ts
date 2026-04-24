@@ -255,19 +255,15 @@ const STYLE_LABEL: Record<keyof typeof STYLES, string> = {
   withdrawn: "신중하게 내면을 살피는",
 };
 
-/**
- * 팀 전체 성향을 한 문장으로 요약. 센터/스타일 분포 + 빈 라인 감지.
- * 예) "실행력 중심, 적극적으로 밀어붙이는 팀이에요. 관계·감정 라인이 비어 있어요."
- */
-export function teamOneLiner(members: Member[]): string {
-  const total = members.length;
+function oneLinerFrom(
+  total: number,
+  centers: Record<keyof typeof CENTERS, number>,
+  styles: Record<keyof typeof STYLES, number>
+): string {
   if (total === 0) return "";
   if (total === 1) {
     return "아직 혼자 있는 팀이에요. 동료가 들어오면 팀 성향이 보여요.";
   }
-
-  const centers = centerDistribution(members);
-  const styles = styleDistribution(members);
 
   const centerEntries = (Object.keys(centers) as Array<keyof typeof CENTERS>)
     .map((k) => ({ key: k, count: centers[k] }))
@@ -297,4 +293,102 @@ export function teamOneLiner(members: Member[]): string {
     line += ` ${CENTER_WEAK_LABEL[weakestCenter.key]} 라인이 비어 있어요.`;
   }
   return line;
+}
+
+/**
+ * 팀 전체 성향을 한 문장으로 요약. 센터/스타일 분포 + 빈 라인 감지.
+ * 예) "실행력 중심, 적극적으로 밀어붙이는 팀이에요. 관계·감정 라인이 비어 있어요."
+ */
+export function teamOneLiner(members: Member[]): string {
+  return oneLinerFrom(members.length, centerDistribution(members), styleDistribution(members));
+}
+
+export type TeamAnalysis = {
+  vector: MetaphorVector;
+  typeDistribution: Record<TypeId, number>;
+  centerDistribution: Record<keyof typeof CENTERS, number>;
+  styleDistribution: Record<keyof typeof STYLES, number>;
+  /** 점수 내림차순 정렬된 모든 페어. 멤버 < 2면 빈 배열. */
+  pairs: PairResult[];
+  averagePairScore: number | null;
+  diversity: { unique: number; total: number; pct: number; label: string };
+  metaphorTop: Array<{ metaphor: Metaphor; similarity: number }>;
+  oneLiner: string;
+  best?: PairResult;
+  challenge?: PairResult;
+};
+
+/**
+ * 팀원 배열을 한 번 순회하며 모든 집계 지표를 계산한다.
+ * TeamDashboard처럼 여러 지표를 동시에 소비하는 곳에서는 이 함수 하나로 대체해,
+ * typeDistribution/centerDistribution/teamVector 등이 각각 members를 다시 돌지 않도록 한다.
+ */
+export function analyzeTeam(members: Member[], metaphorCount = 3): TeamAnalysis {
+  const total = members.length;
+  const vector: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const typeDist: Record<TypeId, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+  const centers: Record<keyof typeof CENTERS, number> = { gut: 0, heart: 0, head: 0 };
+  const styles: Record<keyof typeof STYLES, number> = { assertive: 0, compliant: 0, withdrawn: 0 };
+
+  const centerKeys = Object.keys(CENTERS) as Array<keyof typeof CENTERS>;
+  const styleKeys = Object.keys(STYLES) as Array<keyof typeof STYLES>;
+
+  for (const m of members) {
+    const mv = toVector(m.scores);
+    for (let i = 0; i < 9; i++) vector[i] += mv[i];
+    typeDist[m.type] += 1;
+    for (const k of centerKeys) if (CENTERS[k].types.includes(m.type)) centers[k] += 1;
+    for (const k of styleKeys) if (STYLES[k].types.includes(m.type)) styles[k] += 1;
+  }
+
+  const pairs: PairResult[] = [];
+  for (let i = 0; i < members.length; i++) {
+    for (let j = i + 1; j < members.length; j++) {
+      const a = members[i];
+      const b = members[j];
+      pairs.push({
+        a,
+        b,
+        score: pairScore(a.type, b.type),
+        reason: pairReason(a.type, b.type),
+      });
+    }
+  }
+  pairs.sort((x, y) => y.score - x.score);
+
+  const averagePairScore =
+    pairs.length === 0
+      ? null
+      : Math.round(pairs.reduce((acc, p) => acc + p.score, 0) / pairs.length);
+
+  const unique = ALL_TYPES.filter((t) => typeDist[t] > 0).length;
+  const pct = total === 0 ? 0 : Math.round((unique / total) * 100);
+  let diversityLabel: string;
+  if (total === 0 || total === 1) diversityLabel = "—";
+  else if (unique === total) diversityLabel = "매우 다양함";
+  else if (unique / total >= 0.7) diversityLabel = "다양함";
+  else if (unique / total >= 0.5) diversityLabel = "적당히 섞임";
+  else diversityLabel = "비슷한 성향";
+
+  const v = vector as MetaphorVector;
+  const metaphorTop =
+    total === 0
+      ? []
+      : METAPHORS.map((meta) => ({ metaphor: meta, similarity: cosine(v, meta.vector) }))
+          .sort((a, b) => b.similarity - a.similarity)
+          .slice(0, metaphorCount);
+
+  return {
+    vector: v,
+    typeDistribution: typeDist,
+    centerDistribution: centers,
+    styleDistribution: styles,
+    pairs,
+    averagePairScore,
+    diversity: { unique, total, pct, label: diversityLabel },
+    metaphorTop,
+    oneLiner: oneLinerFrom(total, centers, styles),
+    best: pairs[0],
+    challenge: pairs.length > 0 ? pairs[pairs.length - 1] : undefined,
+  };
 }

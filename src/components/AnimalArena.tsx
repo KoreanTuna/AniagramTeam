@@ -296,6 +296,8 @@ export const AnimalArena = forwardRef<AnimalArenaHandle, Props>(function AnimalA
     >
       <canvas
         ref={canvasRef}
+        role="img"
+        aria-label="선택한 답변에 따라 유형별 동물이 등장하는 장식용 애니메이션"
         style={{
           display: "block",
           width: "100%",
