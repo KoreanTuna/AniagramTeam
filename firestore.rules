@@ -1,0 +1,85 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // 익명 로그인 사용자를 제외한, 실제 계정(Google 등)으로 인증된 사용자인지 검사.
+    // 팀 생성/참여는 이 조건을 통과한 사용자만 가능하도록 제한한다.
+    function isIdentifiedUser() {
+      return isSignedIn()
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isTeamMember(teamId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/teams/$(teamId)/members/$(request.auth.uid));
+    }
+
+    function isTeamOwner(teamId) {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/teams/$(teamId)).data.ownerUid == request.auth.uid;
+    }
+
+    // codes/{code} -> { teamId, createdAt, expiresAt }
+    // 코드는 정확히 아는 사람만 단건 조회 가능. 목록/쿼리 금지.
+    match /codes/{code} {
+      allow get: if isSignedIn();
+      allow list: if false;
+
+      allow create: if isIdentifiedUser()
+        && request.resource.data.keys().hasOnly(['teamId', 'createdAt', 'expiresAt'])
+        && request.resource.data.teamId is string;
+      allow update, delete: if false;
+    }
+
+    // teams/{teamId}
+    // 팀 단건 조회는 인증만 요구(코드 통해 teamId를 아는 사람이 접근).
+    // 목록/쿼리는 금지해 임의 열람을 차단.
+    match /teams/{teamId} {
+      allow get: if isSignedIn();
+      allow list: if false;
+
+      allow create: if isIdentifiedUser()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.code is string
+        && request.resource.data.name is string;
+
+      allow update: if isSignedIn()
+        && resource.data.ownerUid == request.auth.uid;
+
+      allow delete: if isSignedIn()
+        && resource.data.ownerUid == request.auth.uid;
+
+      // members/{uid}
+      // 본인 문서는 본인만 조회 가능(가입 상태 확인용). 팀원 목록 조회는 팀 멤버만.
+      match /members/{memberUid} {
+        allow get: if isSelf(memberUid) || isTeamMember(teamId);
+        // 단일 팀 내 멤버 목록 조회는 해당 팀 멤버만.
+        allow list: if isTeamMember(teamId);
+
+        allow create: if isSelf(memberUid)
+          && isIdentifiedUser()
+          && request.resource.data.uid == request.auth.uid;
+
+        allow update: if isSelf(memberUid);
+
+        allow delete: if isSelf(memberUid) || isTeamOwner(teamId);
+      }
+    }
+
+    // collectionGroup('members').where('uid', '==', auth.uid) 로 본인 멤버십 조회.
+    // collection group 쿼리는 teamId 가 path 에 바인딩되지 않으므로 별도 룰이 필요하다.
+    // where 필터가 본인 uid 로 강제돼 있으면 list 를 허용한다.
+    match /{path=**}/members/{memberUid} {
+      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+  }
+}

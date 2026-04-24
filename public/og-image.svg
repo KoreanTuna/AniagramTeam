@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0B0F14"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.8" cy="0.2" r="0.7">
+      <stop offset="0%" stop-color="#6366F1" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#6366F1" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="50%" stop-color="#F472B6"/>
+      <stop offset="100%" stop-color="#818CF8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- Left 9 type dots -->
+  <g transform="translate(96, 120)">
+    <circle cx="0" cy="0" r="28" fill="#FBBF24"/>
+    <circle cx="72" cy="0" r="28" fill="#F472B6"/>
+    <circle cx="144" cy="0" r="28" fill="#FB923C"/>
+    <circle cx="0" cy="72" r="28" fill="#A78BFA"/>
+    <circle cx="72" cy="72" r="28" fill="#60A5FA"/>
+    <circle cx="144" cy="72" r="28" fill="#34D399"/>
+    <circle cx="0" cy="144" r="28" fill="#F87171"/>
+    <circle cx="72" cy="144" r="28" fill="#4ADE80"/>
+    <circle cx="144" cy="144" r="28" fill="#E5E7EB"/>
+  </g>
+
+  <!-- Title -->
+  <text x="96" y="380" font-family="ui-sans-serif, -apple-system, Pretendard, sans-serif" font-size="96" font-weight="800" fill="#F3F4F6" letter-spacing="-3">
+    우리 팀 애니어그램
+  </text>
+  <text x="96" y="456" font-family="ui-sans-serif, -apple-system, Pretendard, sans-serif" font-size="36" font-weight="500" fill="#9CA3AF">
+    12문항으로 알아보는 우리 팀의 케미 · 시너지 · 회사 스타일
+  </text>
+
+  <!-- Tag -->
+  <g transform="translate(96, 500)">
+    <rect width="340" height="52" rx="26" fill="#1F2937" stroke="#374151"/>
+    <text x="170" y="34" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="22" font-weight="700" fill="url(#accent)" letter-spacing="4">
+      9 TYPES · 12 QUESTIONS
+    </text>
+  </g>
+
+  <!-- Right decoration -->
+  <g transform="translate(860, 170)" opacity="0.9">
+    <circle cx="120" cy="120" r="110" fill="none" stroke="#6366F1" stroke-width="2" stroke-dasharray="4 8"/>
+    <circle cx="120" cy="120" r="70" fill="none" stroke="#F472B6" stroke-width="2" stroke-dasharray="4 8"/>
+    <circle cx="120" cy="120" r="34" fill="url(#accent)"/>
+    <text x="120" y="132" text-anchor="middle" font-family="ui-sans-serif" font-size="36" font-weight="800" fill="#0B0F14">9</text>
+  </g>
+</svg>
