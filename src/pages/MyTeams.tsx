@@ -4,6 +4,7 @@ import { Card } from "../components/Card";
 import { PrimaryBtn, GhostBtn, SecondaryBtn } from "../components/Btn";
 import { PixelIcon } from "../components/PixelIcon";
 import { PixelAnimal } from "../components/PixelAnimal";
+import { ExpiredBadge } from "../components/ExpiredBadge";
 import { bgStyle, C } from "../data/design";
 import { useAuth } from "../lib/auth";
 import { listMyTeams, MyTeamEntry } from "../lib/teams";
@@ -18,6 +19,11 @@ export function MyTeams() {
   const [error, setError] = useState<string>("");
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
+
+  // Google 인증이 완료되면 authBusy를 해제한다.
+  useEffect(() => {
+    if (isGoogleAuthed) setAuthBusy(false);
+  }, [isGoogleAuthed]);
 
   useEffect(() => {
     if (!user || !isGoogleAuthed) return;
@@ -182,18 +188,7 @@ export function MyTeams() {
                           >
                             {e.team.name}
                           </div>
-                          {e.expired && (
-                            <span
-                              className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0"
-                              style={{
-                                background: "rgba(239,68,68,0.12)",
-                                color: C.danger,
-                                border: `1px solid rgba(239,68,68,0.3)`,
-                              }}
-                            >
-                              만료됨
-                            </span>
-                          )}
+                          {e.expired && <ExpiredBadge />}
                         </div>
                         <div
                           className="text-[11px] mt-0.5 flex items-center gap-1.5"

@@ -135,20 +135,34 @@ export function subscribeTeam(
 
   let latestTeam: Team | null = null;
   let latestMembers: Member[] = [];
+  let teamReady = false;
+  let membersReady = false;
+  let cancelled = false;
+
+  // 두 스냅샷이 모두 도착한 뒤부터 콜백을 발화해, team/members가 서로 일관된
+  // 스냅샷으로만 소비자에게 전달되도록 한다. 이후 변경은 즉시 전파한다.
+  const emit = () => {
+    if (cancelled) return;
+    if (!teamReady || !membersReady) return;
+    onChange(latestTeam, latestMembers);
+  };
 
   const unsubTeam = onSnapshot(teamRef, (snap) => {
     latestTeam = snap.exists() ? (snap.data() as Team) : null;
-    onChange(latestTeam, latestMembers);
+    teamReady = true;
+    emit();
   });
 
   const unsubMembers = onSnapshot(membersRef, (snap) => {
     latestMembers = snap.docs
       .map((d) => d.data() as Member)
       .sort((a, b) => a.joinedAt - b.joinedAt);
-    onChange(latestTeam, latestMembers);
+    membersReady = true;
+    emit();
   });
 
   return () => {
+    cancelled = true;
     unsubTeam();
     unsubMembers();
   };

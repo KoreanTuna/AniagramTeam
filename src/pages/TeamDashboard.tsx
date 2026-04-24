@@ -5,6 +5,8 @@ import { PrimaryBtn, SecondaryBtn, GhostBtn } from "../components/Btn";
 import { TypeBadge } from "../components/TypeBadge";
 import { PixelIcon, IconName } from "../components/PixelIcon";
 import { PixelAnimal } from "../components/PixelAnimal";
+import { ExpiredBanner, ExpiryText } from "../components/ExpiredBadge";
+import { ConfirmModal } from "../components/ConfirmModal";
 import { Toast } from "../components/Toast";
 import { RadarChart } from "../components/charts/RadarChart";
 import { bgStyle, C } from "../data/design";
@@ -46,7 +48,6 @@ import {
 } from "../lib/analysis";
 import { clearResult, setPendingJoin } from "../lib/localResult";
 import {
-  daysUntil,
   isExpired,
   isValidCodeFormat,
   normalizeCode,
@@ -68,6 +69,8 @@ export function TeamDashboard() {
   const [toast, setToast] = useState("");
   const [selectedPair, setSelectedPair] = useState<{ a: Member; b: Member } | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showRetakeConfirm, setShowRetakeConfirm] = useState(false);
 
   useEffect(() => {
     if (!isValidCodeFormat(code)) {
@@ -93,11 +96,18 @@ export function TeamDashboard() {
           return;
         }
         setTeam(t);
-        unsub = subscribeTeam(t.id, (liveTeam, liveMembers) => {
+        const sub = subscribeTeam(t.id, (liveTeam, liveMembers) => {
+          if (cancelled) return;
           if (liveTeam) setTeam(liveTeam);
           setMembers(liveMembers);
           setLoading(false);
         });
+        // 구독 생성과 cancelled 체크 사이에 unmount가 발생해도 즉시 정리.
+        if (cancelled) {
+          sub();
+          return;
+        }
+        unsub = sub;
       } catch (e: unknown) {
         if (cancelled) return;
         if (e instanceof TeamError) setLoadError(e.message);
@@ -150,7 +160,6 @@ export function TeamDashboard() {
 
   const onLeave = async () => {
     if (!team || !user) return;
-    if (!confirm("팀에서 나가면 내 결과는 팀에서 사라져요. 정말 나가시겠어요?")) return;
     try {
       await leaveTeam(team.id, user.uid);
       nav("/", { replace: true });
@@ -199,7 +208,6 @@ export function TeamDashboard() {
   }
 
   const expired = isExpired(team.expiresAt);
-  const left = daysUntil(team.expiresAt);
 
   return (
     <div style={bgStyle} className="p-3 sm:p-6">
@@ -229,11 +237,7 @@ export function TeamDashboard() {
                 {" · "}
                 {members.length} / {TEAM_CAPACITY}명
                 {" · "}
-                {expired ? (
-                  <span style={{ color: C.danger }}>만료됨</span>
-                ) : (
-                  <span>{left}일 남음</span>
-                )}
+                <ExpiryText expiresAt={team.expiresAt} expired={expired} />
               </div>
             </div>
           </div>
@@ -525,15 +529,8 @@ export function TeamDashboard() {
         <Card className="p-5 space-y-2">
           {expired ? (
             <>
-              <div
-                className="rounded-2xl p-3 text-xs leading-relaxed mb-1"
-                style={{
-                  background: "rgba(239,68,68,0.08)",
-                  border: `1px solid rgba(239,68,68,0.3)`,
-                  color: C.textL,
-                }}
-              >
-                이 팀은 만료돼서 읽기 전용이에요. 새 팀을 만들어 다시 시작해보세요.
+              <div className="mb-1">
+                <ExpiredBanner />
               </div>
               <PrimaryBtn onClick={() => nav("/team/create")}>
                 <span className="inline-flex items-center gap-2">
@@ -550,19 +547,12 @@ export function TeamDashboard() {
                   내 결과 다시 업데이트
                 </span>
               </SecondaryBtn>
-              <GhostBtn
-                onClick={() => {
-                  if (!confirm("테스트를 다시 풀면 새 결과로 내 정보가 업데이트돼요. 계속할까요?")) return;
-                  clearResult();
-                  setPendingJoin(team.code);
-                  nav("/role");
-                }}
-              >
+              <GhostBtn onClick={() => setShowRetakeConfirm(true)}>
                 테스트 다시 풀고 갱신하기
               </GhostBtn>
             </>
           )}
-          <GhostBtn onClick={onLeave}>
+          <GhostBtn onClick={() => setShowLeaveConfirm(true)}>
             {isOwner ? "팀장 권한 유지한 채 나가기" : "팀에서 나가기"}
           </GhostBtn>
         </Card>
@@ -575,6 +565,31 @@ export function TeamDashboard() {
           onClose={() => setSelectedMember(null)}
         />
       )}
+      <ConfirmModal
+        open={showLeaveConfirm}
+        title="팀에서 나갈까요?"
+        description="팀에서 나가면 내 결과는 팀에서 사라져요."
+        confirmLabel="나가기"
+        danger
+        onCancel={() => setShowLeaveConfirm(false)}
+        onConfirm={() => {
+          setShowLeaveConfirm(false);
+          onLeave();
+        }}
+      />
+      <ConfirmModal
+        open={showRetakeConfirm}
+        title="다시 풀어볼까요?"
+        description="테스트를 다시 풀면 새 결과로 내 정보가 업데이트돼요."
+        confirmLabel="다시 풀기"
+        onCancel={() => setShowRetakeConfirm(false)}
+        onConfirm={() => {
+          setShowRetakeConfirm(false);
+          clearResult();
+          setPendingJoin(team.code);
+          nav("/role");
+        }}
+      />
       <Toast message={toast} onHide={() => setToast("")} />
     </div>
   );

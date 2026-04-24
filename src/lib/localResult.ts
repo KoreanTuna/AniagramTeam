@@ -3,11 +3,25 @@ import { LocalResult } from "../types";
 const RESULT_KEY = "aniagram:result";
 const PENDING_JOIN_KEY = "aniagram:pendingJoin";
 
-export function saveResult(result: LocalResult) {
+function isQuotaError(e: unknown): boolean {
+  if (!(e instanceof Error)) return false;
+  // Safari는 "QuotaExceededError"를 throw, 일부 브라우저는 DOMException code 22.
+  return (
+    e.name === "QuotaExceededError" ||
+    e.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+    (e as { code?: number }).code === 22
+  );
+}
+
+export type SaveResultError = "quota" | "unavailable";
+
+export function saveResult(result: LocalResult): { ok: true } | { ok: false; reason: SaveResultError } {
   try {
     localStorage.setItem(RESULT_KEY, JSON.stringify(result));
-  } catch {
-    // ignore
+    return { ok: true };
+  } catch (e) {
+    if (isQuotaError(e)) return { ok: false, reason: "quota" };
+    return { ok: false, reason: "unavailable" };
   }
 }
 
@@ -25,7 +39,7 @@ export function clearResult() {
   try {
     localStorage.removeItem(RESULT_KEY);
   } catch {
-    // ignore
+    // ignore - 삭제 실패는 UX에 치명적이지 않음.
   }
 }
 

@@ -1,22 +1,20 @@
 import { useState } from "react";
 import { useAuth } from "../lib/auth";
 import { C } from "../data/design";
+import { ConfirmModal } from "./ConfirmModal";
 
 export function Header() {
   const { user, isGoogleAuthed, signOutGoogle } = useAuth();
   const [busy, setBusy] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   if (!isGoogleAuthed || !user) return null;
 
   const label = user.displayName?.trim() || user.email || "로그인됨";
   const photo = user.photoURL ?? "";
 
-  const onLogout = async () => {
-    if (busy) return;
-    const ok = window.confirm(
-      "로그아웃할까요?\n\n로그아웃하면 새 익명 계정으로 전환돼요.\n팀에 다시 접근하려면 같은 Google 계정으로 로그인해야 해요."
-    );
-    if (!ok) return;
+  const doLogout = async () => {
+    setShowConfirm(false);
     setBusy(true);
     try {
       await signOutGoogle();
@@ -67,7 +65,7 @@ export function Header() {
           {label}
         </span>
         <button
-          onClick={onLogout}
+          onClick={() => !busy && setShowConfirm(true)}
           disabled={busy}
           className="text-[10px] font-semibold px-2 py-1 rounded-full transition-colors disabled:opacity-50"
           style={{
@@ -87,6 +85,15 @@ export function Header() {
           {busy ? "..." : "로그아웃"}
         </button>
       </div>
+      <ConfirmModal
+        open={showConfirm}
+        title="로그아웃할까요?"
+        description="로그아웃하면 새 익명 계정으로 전환돼요. 팀에 다시 접근하려면 같은 Google 계정으로 로그인해야 해요."
+        confirmLabel="로그아웃"
+        danger
+        onCancel={() => setShowConfirm(false)}
+        onConfirm={doLogout}
+      />
     </header>
   );
 }

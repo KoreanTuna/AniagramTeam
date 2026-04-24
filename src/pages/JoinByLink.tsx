@@ -34,6 +34,11 @@ export function JoinByLink() {
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
 
+  // Google 인증이 완료되면 authBusy를 해제한다 (popup 성공/redirect 복귀/기존 세션).
+  useEffect(() => {
+    if (isGoogleAuthed) setAuthBusy(false);
+  }, [isGoogleAuthed]);
+
   useEffect(() => {
     if (!validCode) {
       setResolving(false);

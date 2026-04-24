@@ -31,6 +31,7 @@ export function Quiz() {
   // 동일 인덱스 버튼에 hover 스타일이 남는 문제 방지용. idx 변경 시 초기화한다.
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+  const [saveError, setSaveError] = useState<"quota" | "unavailable" | null>(null);
 
   // 점수 누적은 ref로 관리해 setTimeout 내부 stale closure 문제를 제거.
   const scoresRef = useRef<Scores>(emptyScores());
@@ -76,13 +77,19 @@ export function Quiz() {
         if (import.meta.env.DEV) {
           console.log("[quiz] final scores", finalScores, "→ top", top);
         }
-        saveResult({
+        const saved = saveResult({
           type: top,
           scores: finalScores,
           role,
           completedAt: Date.now(),
         });
-        nav("/result", { replace: true });
+        if (saved.ok) {
+          nav("/result", { replace: true });
+        } else {
+          // 결과를 저장 못하면 리다이렉트하지 않는다. Result 페이지가 loadResult()로
+          // 다시 읽어야 하므로, 여기서 저장 실패 시 넘어가면 빈 결과 루프가 된다.
+          setSaveError(saved.reason);
+        }
       }
       setFading(false);
       pickingRef.current = false;
@@ -209,6 +216,70 @@ export function Quiz() {
           <AnimalArena ref={arenaRef} height={110} />
         </div>
       </Card>
+      {saveError && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-5"
+          style={{ background: "rgba(0,0,0,0.6)" }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="save-error-title"
+        >
+          <div
+            className="w-full max-w-xs rounded-2xl p-5"
+            style={{ background: C.surface, border: `1px solid ${C.border}` }}
+          >
+            <h3
+              id="save-error-title"
+              className="text-base font-bold mb-1.5"
+              style={{ color: C.text }}
+            >
+              결과를 저장하지 못했어요
+            </h3>
+            <p className="text-[13px] leading-relaxed mb-4" style={{ color: C.textL }}>
+              {saveError === "quota"
+                ? "브라우저 저장 공간이 부족해요. 다른 탭을 정리하거나 방문 기록을 삭제한 뒤 다시 시도해주세요."
+                : "브라우저 저장소에 접근할 수 없어요. 시크릿 모드라면 일반 모드로 다시 시도해주세요."}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => nav("/", { replace: true })}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98]"
+                style={{
+                  background: C.surfaceHi,
+                  color: C.text,
+                  border: `1px solid ${C.border}`,
+                }}
+              >
+                홈으로
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const finalScores = scoresRef.current;
+                  const top = topTypeOf(finalScores);
+                  const retry = saveResult({
+                    type: top,
+                    scores: finalScores,
+                    role,
+                    completedAt: Date.now(),
+                  });
+                  if (retry.ok) {
+                    setSaveError(null);
+                    nav("/result", { replace: true });
+                  } else {
+                    setSaveError(retry.reason);
+                  }
+                }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-[0.98]"
+                style={{ background: C.primary }}
+              >
+                다시 시도
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showHomeConfirm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-5"

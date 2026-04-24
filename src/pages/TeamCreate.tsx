@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Card } from "../components/Card";
 import { PrimaryBtn, GhostBtn } from "../components/Btn";
@@ -18,6 +18,12 @@ export function TeamCreate() {
   const [error, setError] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
+
+  // Google 인증이 완료되면 authBusy를 해제한다. popup 성공, redirect 복귀,
+  // 기존 세션 재사용 모두 isGoogleAuthed 전이를 트리거한다.
+  useEffect(() => {
+    if (isGoogleAuthed) setAuthBusy(false);
+  }, [isGoogleAuthed]);
 
   if (!result) return <Navigate to="/" replace />;
   if (!user) return <Navigate to="/" replace />;
