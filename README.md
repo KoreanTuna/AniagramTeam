@@ -30,25 +30,13 @@
 
 ## 🐾 9가지 에니어그램 동물
 
-<table align="center">
-<tr>
-<td align="center" width="160"><img src="docs/animals/type-1.svg" alt="1번 개혁가 황금 올빼미" width="96"/><br/><b>1번 · 개혁가</b><br/><sub>황금 올빼미 🦉</sub><br/><sub>원칙과 기준</sub></td>
-<td align="center" width="160"><img src="docs/animals/type-2.svg" alt="2번 조력자 포근한 토끼" width="96"/><br/><b>2번 · 조력자</b><br/><sub>포근한 토끼 🐰</sub><br/><sub>따뜻한 공감</sub></td>
-<td align="center" width="160"><img src="docs/animals/type-3.svg" alt="3번 성취자 영리한 여우" width="96"/><br/><b>3번 · 성취자</b><br/><sub>영리한 여우 🦊</sub><br/><sub>목표와 실행</sub></td>
-</tr>
-<tr>
-<td align="center"><img src="docs/animals/type-4.svg" alt="4번 예술가 신비한 고양이" width="96"/><br/><b>4번 · 예술가</b><br/><sub>신비한 고양이 🐈</sub><br/><sub>창의와 감수성</sub></td>
-<td align="center"><img src="docs/animals/type-5.svg" alt="5번 탐구자 호기심 개구리" width="96"/><br/><b>5번 · 탐구자</b><br/><sub>호기심 개구리 🐸</sub><br/><sub>분석과 통찰</sub></td>
-<td align="center"><img src="docs/animals/type-6.svg" alt="6번 충성가 든든한 강아지" width="96"/><br/><b>6번 · 충성가</b><br/><sub>든든한 강아지 🐶</sub><br/><sub>안정과 신뢰</sub></td>
-</tr>
-<tr>
-<td align="center"><img src="docs/animals/type-7.svg" alt="7번 열정가 발랄한 병아리" width="96"/><br/><b>7번 · 열정가</b><br/><sub>발랄한 병아리 🐤</sub><br/><sub>에너지와 즐거움</sub></td>
-<td align="center"><img src="docs/animals/type-8.svg" alt="8번 도전자 용맹한 곰" width="96"/><br/><b>8번 · 도전자</b><br/><sub>용맹한 곰 🐻</sub><br/><sub>결단과 주도</sub></td>
-<td align="center"><img src="docs/animals/type-9.svg" alt="9번 평화주의자 느긋한 판다" width="96"/><br/><b>9번 · 평화주의자</b><br/><sub>느긋한 판다 🐼</sub><br/><sub>조화와 평온</sub></td>
-</tr>
-</table>
+<div align="center">
 
-> 각 동물은 `src/data/animals.ts` 에 8비트 픽셀 그리드 + 팔레트로 정의돼 있어요. README 이미지는 `scripts/generate-animal-svgs.ts` 로 동일 데이터에서 자동 생성됩니다.
+<img src="docs/enneagram.svg" alt="9가지 에니어그램 유형 — 원형 그래프" width="640"/>
+
+</div>
+
+> 9번을 꼭대기에 두고 시계 방향으로 1~8을 배치한 전통 애니어그램 배열이에요. 내부 삼각형(9-3-6)과 헥사드(1-4-2-8-5-7)는 유형 간 성장·스트레스 관계 라인을 나타내요. 각 동물은 `src/data/animals.ts` 의 8비트 픽셀 그리드 + 팔레트로 정의되고, 그래프와 개별 동물 SVG는 `scripts/generate-enneagram-svg.ts`, `scripts/generate-animal-svgs.ts` 로 동일 데이터에서 자동 생성돼요.
 
 ## 🧭 어떻게 작동하나요?
 
